@@ -4,6 +4,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Fan.Models
 {
+    /// <summary>
+    /// Represents a user in the system.
+    /// </summary>
+    /// <remarks>
+    /// It's derived from <see cref=" IdentityUser"/> with added properties.
+    /// </remarks>
     public class User : IdentityUser<int>
     {
         public User()
@@ -22,5 +28,18 @@ namespace Fan.Models
         [Required]
         [StringLength(maximumLength: 256)]
         public string DisplayName { get; set; }
+
+        /// <summary>
+        /// A GUID <see cref="GenerateSerialNumber"/> used for validate user token context 
+        /// Fan.Accounts.TokenSerivce.ValidateTokenContextAsync(). 
+        /// A new one is generated every time a user changes password, role or status etc.
+        /// </summary>
+        [StringLength(maximumLength: 256)]
+        public string SerialNumber { get; set; }
+
+        public static string GenerateSerialNumber()
+        {
+            return Guid.NewGuid().ToString("N");
+        }
     }
 }

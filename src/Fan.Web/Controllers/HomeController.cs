@@ -1,4 +1,5 @@
-﻿using Fan.Blogs.Controllers;
+﻿using Fan.Accounts;
+using Fan.Blogs.Controllers;
 using Fan.Blogs.Services;
 using Fan.Exceptions;
 using Fan.Models;
@@ -67,37 +68,52 @@ namespace Fan.Web.Controllers
             {
                 _logger.LogInformation("Fanray Setup Begins");
 
-                // user with email as username
-                var user = new User { UserName = model.Email, Email = model.Email, DisplayName = model.DisplayName };
-                var adminRole = "Administrator";
-                var role = new Role
+                // user 
+                var user = new User
                 {
-                    Name = adminRole,
+                    UserName = model.Email, // with email as username
+                    Email = model.Email,
+                    DisplayName = model.DisplayName,
+                    SerialNumber = Fan.Models.User.GenerateSerialNumber()
+                };
+
+                // roles
+                var adminRole = new Role
+                {
+                    Name = SystemRoles.Admininistrator,
                     IsSystemRole = true,
                     Description = "An Administrator has full power over the site and can do everything."
+                };
+                var editorRole = new Role
+                {
+                    Name = SystemRoles.Editor,
+                    IsSystemRole = true,
+                    Description = "An Editor can create, edit, publish, and delete any post or page (not just their own), as well as moderate comments and manage categories and tags."
                 };
 
                 // create user
                 var result = await _userManager.CreateAsync(user, model.Password);
 
-                // create Admin role
+                // create roles
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("{@User} account created with password.", user);
-                    if (!await _roleManager.RoleExistsAsync(adminRole))
-                        result = await _roleManager.CreateAsync(role);
+                    if (!await _roleManager.RoleExistsAsync(SystemRoles.Admininistrator))
+                        result = await _roleManager.CreateAsync(adminRole);
+                    if (!await _roleManager.RoleExistsAsync(SystemRoles.Editor))
+                        result = await _roleManager.CreateAsync(editorRole);
                 }
 
                 // assign Admin role to user
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("{@Role} created.", role);
-                    result = await _userManager.AddToRoleAsync(user, adminRole);
+                    _logger.LogInformation("{@Role} created.", adminRole);
+                    result = await _userManager.AddToRoleAsync(user, SystemRoles.Admininistrator);
                 }
 
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("{@Role} assigned to {@User}.", role, user);
+                    _logger.LogInformation("{@Role} assigned to {@User}.", adminRole, user);
 
                     // sign-in user
                     await _signInManager.SignInAsync(user, isPersistent: false);

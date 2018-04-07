@@ -3,6 +3,7 @@ using Humanizer;
 using System;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Fan.Helpers
@@ -203,6 +204,16 @@ namespace Fan.Helpers
         {
             var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
             return TimeZoneInfo.ConvertTime(serverTime, userTimeZone);
+        }
+
+        public static string GetSha256Hash(string input)
+        {
+            using (var hashAlgorithm = new SHA256CryptoServiceProvider())
+            {
+                var byteValue = Encoding.UTF8.GetBytes(input);
+                var byteHash = hashAlgorithm.ComputeHash(byteValue);
+                return Convert.ToBase64String(byteHash);
+            }
         }
     }
 }

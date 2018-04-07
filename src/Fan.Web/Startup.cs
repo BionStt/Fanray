@@ -1,4 +1,8 @@
 ﻿using AutoMapper;
+using Fan.Accounts;
+using Fan.Accounts.Data;
+using Fan.Accounts.Models;
+using Fan.Accounts.Services;
 using Fan.Blogs.Data;
 using Fan.Blogs.Helpers;
 using Fan.Blogs.MetaWeblog;
@@ -12,6 +16,7 @@ using Fan.Settings;
 using Fan.Shortcodes;
 using Fan.Web.Middlewares;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -21,7 +26,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Swagger;
+using System;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Fan.Web
 {
@@ -90,6 +99,8 @@ namespace Fan.Web
             services.AddScoped<IPostRepository, SqlPostRepository>();
             services.AddScoped<ICategoryRepository, SqlCategoryRepository>();
             services.AddScoped<ITagRepository, SqlTagRepository>();
+            services.AddScoped<ITokenRepository, SqlTokenRepository>();
+            services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ISettingService, SettingService>();
             services.AddScoped<IMediaService, MediaService>();
             services.AddScoped<IEmailSender, EmailSender>();
@@ -110,6 +121,64 @@ namespace Fan.Web
             services.AddSingleton<IShortcodeService>(shortcodeService);
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<ApiExceptionFilter>();
+
+            // Bearer appsettings
+            services.Configure<BearerTokensOptions>(options => Configuration.GetSection("BearerTokens").Bind(options));
+            // Only needed for custom roles.
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(SystemRoles.Admininistrator, policy => policy.RequireRole(SystemRoles.Admininistrator));
+                options.AddPolicy(SystemRoles.Editor, policy => policy.RequireRole(SystemRoles.Editor));
+            });
+            // Needed for jwt auth.
+            services
+                /** 
+                 * https://wildermuth.com/2017/08/19/Two-AuthorizationSchemes-in-ASP-NET-Core-2
+                 * if don't define Defaults here because we want to have both cookie and token auth, it'll default to cookie, so we need to specify 
+                 * "AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme" to each individaul controller that needs bearer token.
+                 */
+                .AddAuthentication()
+                .AddCookie(cfg => cfg.SlidingExpiration = true)
+                .AddJwtBearer(cfg =>
+                {
+                    cfg.RequireHttpsMetadata = false;
+                    cfg.SaveToken = true;
+                    cfg.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidIssuer = Configuration["BearerTokens:Issuer"], // site that makes the token
+                        ValidateIssuer = true, // TODO: change this to avoid forwarding attacks
+                        ValidAudience = Configuration["BearerTokens:Audience"], // site that consumes the token
+                        ValidateAudience = true, // TODO: change this to avoid forwarding attacks
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["BearerTokens:Key"])),
+                        ValidateIssuerSigningKey = true, // verify signature to avoid tampering
+                        ValidateLifetime = true, // validate the expiration
+                        ClockSkew = TimeSpan.Zero // tolerance for the expiration date
+                    };
+                    cfg.Events = new JwtBearerEvents
+                    {
+                        OnAuthenticationFailed = context =>
+                        {
+                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(JwtBearerEvents));
+                            logger.LogError("Authentication failed.", context.Exception);
+                            return Task.CompletedTask;
+                        },
+                        OnTokenValidated = context =>
+                        {
+                            var tokenValidatorService = context.HttpContext.RequestServices.GetRequiredService<ITokenService>();
+                            return tokenValidatorService.ValidateTokenContextAsync(context);
+                        },
+                        OnMessageReceived = context =>
+                        {
+                            return Task.CompletedTask;
+                        },
+                        OnChallenge = context =>
+                        {
+                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(JwtBearerEvents));
+                            logger.LogError("OnChallenge error", context.Error, context.ErrorDescription);
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
 
             // Mvc
             services.AddMvc();
@@ -164,6 +233,9 @@ namespace Fan.Web
             routes.MapRoute("Admin", "admin", new { controller = "Home", action = "Admin" });
             routes.MapRoute("About", "about", new { controller = "Home", action = "About" });
             routes.MapRoute("Contact", "contact", new { controller = "Home", action = "Contact" });
+
+            routes.MapRoute("Login", "login", new { controller = "Account", action = "Login" });
+
 
             BlogRoutes.RegisterRoutes(routes);
 

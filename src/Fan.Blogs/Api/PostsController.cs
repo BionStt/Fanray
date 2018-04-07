@@ -1,8 +1,10 @@
-﻿using Fan.Blogs.Api.Models;
+﻿using Fan.Accounts;
+using Fan.Blogs.Api.Models;
 using Fan.Blogs.Enums;
 using Fan.Blogs.Models;
 using Fan.Blogs.Services;
 using Fan.Exceptions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +13,10 @@ using System.Threading.Tasks;
 
 namespace Fan.Blogs.Api
 {
-    [Authorize]
-    [ServiceFilter(typeof(ApiExceptionFilter))]
-    [EnableCors("CorsPolicy")]
     [Route("api/blog/[controller]")]
+    [EnableCors("CorsPolicy")]
+    [ServiceFilter(typeof(ApiExceptionFilter))]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = SystemRoles.Admininistrator)]
     public class PostsController : Controller
     {
         private readonly IBlogService _blogSvc;

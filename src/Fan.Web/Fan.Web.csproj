@@ -28,12 +28,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Fan.Accounts\Fan.Accounts.csproj" />
     <ProjectReference Include="..\Fan.Blogs\Fan.Blogs.csproj" />
     <ProjectReference Include="..\Fan\Fan.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <WCFMetadata Include="Connected Services" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
   </ItemGroup>
 
 </Project>

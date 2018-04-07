@@ -10,12 +10,16 @@ namespace Fan.Data
     /// <summary>
     /// EF implementation of a base repository for commonly used data access methods.
     /// </summary>
-    /// <typeparam name="T">It is a sub type of <see cref="Entity"/> which provides an int based PK.</typeparam>
+    /// <typeparam name="T">
+    /// Ideally T should be a sub type of <see cref="Entity"/> which provides an int based PK,
+    /// however since UserToken in Fan.Accounts derives from IdentityUserToken which has no int
+    /// PK I cannot have T derive from <see cref="Entity"/>, this is unfortunate.
+    /// </typeparam>
     /// <remarks>
     /// The sub class will have its specific methods, for example SqlCategoryRepository and SqlTagRepository
     /// has a GetListAsync() which does their specific join.
     /// </remarks>
-    public class EntityRepository<T> : IRepository<T> where T : Entity
+    public class EntityRepository<T> : IRepository<T> where T : class // Entity
     {
         /// <summary>
         /// The set initialized by sub class.

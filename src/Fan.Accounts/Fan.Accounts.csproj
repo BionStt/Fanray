@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="GuardExtensions.cs" />
+    <Compile Remove="IRolesService.cs" />
+    <Compile Remove="ISecurityService.cs" />
+    <Compile Remove="ITokenStoreService.cs" />
+    <Compile Remove="ITokenValidatorService.cs" />
+    <Compile Remove="IUnitOfWork.cs" />
+    <Compile Remove="IUsersService.cs" />
+    <Compile Remove="Models\AdminRole.cs" />
+    <Compile Remove="Models\AdminUser.cs" />
+    <Compile Remove="Models\UserRole.cs" />
+    <Compile Remove="Models\UserTokenOrig.cs" />
+    <Compile Remove="RolesService.cs" />
+    <Compile Remove="SecurityService.cs" />
+    <Compile Remove="Services\IAccountService.cs" />
+    <Compile Remove="TokenStoreService.cs" />
+    <Compile Remove="TokenValidatorService.cs" />
+    <Compile Remove="UsersService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fan\Fan.csproj" />
+  </ItemGroup>
+
+</Project>

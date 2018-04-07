@@ -1,5 +1,6 @@
 ﻿using Fan.Helpers;
 using Fan.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +10,13 @@ using System;
 namespace Fan.Data
 {
     /// <summary>
-    /// The db context for the entire system.
+    /// The db context for the entire system and is being used by all repositories.
     /// </summary>
-    public class FanDbContext : IdentityDbContext<User, Role, int>
+    /// <remarks>
+    /// Each project has at least one class implements <see cref="IEntityModelBuilder"/> which 
+    /// defines the entities.
+    /// </remarks>
+    public class FanDbContext : IdentityDbContext<User, Role, int, IdentityUserClaim<int>, IdentityUserRole<int>, IdentityUserLogin<int>, IdentityRoleClaim<int>, UserToken>
     {
         public FanDbContext(DbContextOptions<FanDbContext> options) : base(options)
         {
